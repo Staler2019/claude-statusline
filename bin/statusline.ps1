@@ -6,7 +6,7 @@
 # $OutputEncoding / [Console]::OutputEncoding) is unreliable: Windows PowerShell 5.1
 # routes redirected output through its own internal writer rather than honoring
 # [Console]::SetOut, so re-pointing Console.Out has no effect, and $OutputEncoding
-# still ends up mangling the Unicode glyphs below (│ ✍️ ◑ ● ○ ⟳ ⏱ ⚡) into "?" or
+# still ends up mangling the Unicode glyphs below (│ ✍️ ◑ ● ○ ⟳ ⏱ ⚡ 🧊) into "?" or
 # dropping raw ANSI escape bytes once piped. To sidestep all of that, the final
 # output below bypasses the PowerShell pipeline entirely and writes UTF-8 bytes
 # straight to the raw stdout handle.
@@ -192,6 +192,27 @@ switch ($effort) {
     "medium" { $line1 += "${dim}◑ ${effort}${reset}" }
     "low" { $line1 += "${dim}◔ ${effort}${reset}" }
     default { $line1 += "${dim}◑ ${effort}${reset}" }
+}
+
+if ($data.prompt_cache.caching_observed -eq $true) {
+    $cacheLeft = 0
+    if ($data.prompt_cache.warm -eq $true -and $data.prompt_cache.expires_at) {
+        $cacheLeft = [long][math]::Floor([double]$data.prompt_cache.expires_at) - [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    }
+
+    $line1 += $sep
+    if ($cacheLeft -le 0) {
+        $line1 += "🧊 ${red}cold${reset}"
+    } else {
+        $cacheTtl = 3600
+        if ($data.prompt_cache.ttl -eq "5m") { $cacheTtl = 300 }
+        $cacheColor = Get-ColorForPct -Pct (100 - [math]::Floor($cacheLeft * 100 / $cacheTtl))
+        if ($cacheLeft -ge 60) {
+            $line1 += "🧊 ${cacheColor}$([math]::Floor($cacheLeft / 60))m${reset}"
+        } else {
+            $line1 += "🧊 ${cacheColor}${cacheLeft}s${reset}"
+        }
+    }
 }
 
 # ── Rate limits from stdin (primary) ───────────────────

@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { execFileSync } = require("node:child_process");
+const { execFileSync, spawnSync } = require("node:child_process");
 
 const BIN_DIR = path.resolve(__dirname, "..", "bin");
 
@@ -14,6 +14,12 @@ const RED = "\x1b[38;2;255;85;85m";
 
 const RUNNERS = [
   { name: "statusline.sh", command: "bash", args: [path.join(BIN_DIR, "statusline.sh")] },
+  {
+    name: "statusline.ps1",
+    command: "pwsh",
+    args: ["-NoProfile", "-File", path.join(BIN_DIR, "statusline.ps1")],
+    skip: spawnSync("pwsh", ["-Version"]).status !== 0 && "pwsh not installed",
+  },
 ];
 
 function now() {
