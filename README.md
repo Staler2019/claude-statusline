@@ -14,6 +14,12 @@ npx github:staler2019/claude-statusline-win
 
 It backups your old status line if any, copies the right status line script for your platform (`~/.claude/statusline.sh` on macOS/Linux, `~/.claude/statusline.ps1` on Windows), and configures your Claude Code settings. Git Bash/WSL is **not** required on Windows — native PowerShell 5.1 (already installed on Windows 10/11) is used.
 
+## Prompt cache countdown
+
+Line 1 ends with the time left before the prompt cache expires, such as `🧊 42m`, or `🧊 cold` once it has expired. The colour goes from green to red as the cache TTL runs out. It needs Claude Code v2.1.251 or later and appears after the first response.
+
+The installer sets `statusLine.refreshInterval` to `10` so the countdown keeps moving while the session is idle. A value you have already set is kept.
+
 ## Requirements
 
 **macOS / Linux:**
