@@ -11,6 +11,7 @@ const SETTINGS_FILE = path.join(CLAUDE_DIR, "settings.json");
 const STATUSLINE_DEST = path.join(CLAUDE_DIR, isWindows ? "statusline.ps1" : "statusline.sh");
 const STATUSLINE_SRC = path.resolve(__dirname, isWindows ? "statusline.ps1" : "statusline.sh");
 const STATUSLINE_NAME = path.basename(STATUSLINE_DEST);
+const REFRESH_INTERVAL_SECONDS = 10;
 
 const blue = "\x1b[38;2;0;153;255m";
 const green = "\x1b[38;2;0;175;80m";
@@ -145,16 +146,20 @@ function run() {
     command: isWindows
       ? `powershell -NoProfile -File ${STATUSLINE_DEST.replace(/\\/g, "/")}`
       : 'bash "$HOME/.claude/statusline.sh"',
+    refreshInterval: REFRESH_INTERVAL_SECONDS,
   };
 
-  if (
+  const isSameCommand =
     settings.statusLine &&
     settings.statusLine.type === "command" &&
-    settings.statusLine.command === statusLineConfig.command
-  ) {
+    settings.statusLine.command === statusLineConfig.command;
+
+  if (isSameCommand && settings.statusLine.refreshInterval !== undefined) {
     success("Settings already configured");
   } else {
-    settings.statusLine = statusLineConfig;
+    settings.statusLine = isSameCommand
+      ? { ...settings.statusLine, refreshInterval: REFRESH_INTERVAL_SECONDS }
+      : statusLineConfig;
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2) + "\n");
     success(`Updated ${dim}settings.json${reset} with statusLine config`);
   }

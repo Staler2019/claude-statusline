@@ -188,6 +188,28 @@ case "$effort" in
     *)      line1+="${dim}◑ ${effort}${reset}" ;;
 esac
 
+if [ "$(echo "$input" | jq -r '.prompt_cache.caching_observed // false')" = "true" ]; then
+    cache_left=0
+    if [ "$(echo "$input" | jq -r '.prompt_cache.warm // false')" = "true" ]; then
+        cache_expires=$(echo "$input" | jq -r '.prompt_cache.expires_at // 0 | floor')
+        cache_left=$(( cache_expires - $(date +%s) ))
+    fi
+
+    line1+="${sep}"
+    if [ "$cache_left" -le 0 ]; then
+        line1+="🧊 ${red}cold${reset}"
+    else
+        cache_ttl=3600
+        [ "$(echo "$input" | jq -r '.prompt_cache.ttl // empty')" = "5m" ] && cache_ttl=300
+        cache_color=$(color_for_pct $(( 100 - cache_left * 100 / cache_ttl )))
+        if [ "$cache_left" -ge 60 ]; then
+            line1+="🧊 ${cache_color}$(( cache_left / 60 ))m${reset}"
+        else
+            line1+="🧊 ${cache_color}${cache_left}s${reset}"
+        fi
+    fi
+fi
+
 # ── Rate limits from stdin (primary) ───────────────────
 has_stdin_rates=false
 five_hour_pct=""
